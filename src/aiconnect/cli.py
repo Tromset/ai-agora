@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import sys
 import time
 import zlib
@@ -64,6 +65,41 @@ base_url = "http://localhost:11434"   # any extra key is passed to the provider 
 # Other providers: openrouter, groq, mistral, deepseek, xai (see `aic providers`).
 # Long personas can live in a file next to this config:
 #   system_file = "persona.md"
+'''
+
+SUBSCRIPTION_STARTER_CONFIG = '''\
+# aic configuration using your existing subscriptions: no API key.
+#   claude-code -> the Claude Code CLI, logged in with your Claude Pro/Max account
+#   codex       -> the OpenAI Codex CLI, logged in with your ChatGPT account
+# Save as ./aic.toml (it is git-ignored) or ~/.config/aic/config.toml.
+#
+# Setup (once):
+#   npm install -g @anthropic-ai/claude-code @openai/codex
+#   claude          # log in with your Claude account, then /exit
+#   codex login     # log in with your ChatGPT account
+#
+# Try it:
+#   aic chat claude chatgpt --topic "Is free will an illusion?" --rounds 3
+#   aic debate claude chatgpt --motion "Cats are better than dogs" --rounds 2
+#
+# Privacy: each reply is one isolated CLI run in an empty temporary folder, with tools,
+# MCP servers, skills, CLAUDE.md / AGENTS.md, settings and session history turned off.
+# The models only see this conversation. Claude's messages do go to OpenAI and ChatGPT's
+# to Anthropic: don't put anything private in the topic.
+
+[defaults]
+rounds = 3
+# save_dir = "transcripts"    # git-ignored; transcripts can contain whatever you typed
+
+[agents.claude]
+provider = "claude-code"
+model = "sonnet"              # or "opus", "haiku", or a full model id
+system = "You are Claude, a curious philosopher. Answer in a few sentences and ask a sharp follow-up question."
+
+[agents.chatgpt]
+provider = "codex"
+model = "default"             # the model your ChatGPT plan gives Codex; or e.g. "gpt-5"
+system = "You are ChatGPT, a pragmatic engineer. Be concrete, challenge vague claims, keep replies short."
 '''
 
 LOCAL_STARTER_CONFIG = '''\
@@ -498,11 +534,17 @@ def cmd_providers(args: argparse.Namespace, config: Config, out: TextIO, err: Te
     rows: list[tuple[str, str, str, str]] = []
     for name in REGISTRY:
         try:
-            env = provider_class(name).api_key_env
+            cls = provider_class(name)
+            env = cls.api_key_env
         except (AICError, ImportError, AttributeError) as exc:
             rows.append((name, "-", f"unavailable ({exc})", "31"))
             continue
-        if env is None:
+        command = getattr(cls, "default_command", None)
+        if command:
+            found = shutil.which(command) is not None
+            status = f"uses `{command}` login" if found else f"`{command}` not installed"
+            rows.append((name, "-", status, "32" if found else "33"))
+        elif env is None:
             rows.append((name, "-", "no key needed", "2"))
         elif os.environ.get(env):
             rows.append((name, env, "key set", "32"))
@@ -523,9 +565,19 @@ def cmd_init(args: argparse.Namespace, config: Config, out: TextIO, err: TextIO)
         raise ConfigError(f"{path} already exists. Use --force to overwrite it.")
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(LOCAL_STARTER_CONFIG if args.local else STARTER_CONFIG, encoding="utf-8")
+        if args.subscription:
+            template = SUBSCRIPTION_STARTER_CONFIG
+        elif args.local:
+            template = LOCAL_STARTER_CONFIG
+        else:
+            template = STARTER_CONFIG
+        path.write_text(template, encoding="utf-8")
     except OSError as exc:
         raise ConfigError(f"Cannot write {path}: {exc}") from None
+    if args.subscription:
+        print(f"Wrote {path}. Log in once with `claude` and `codex login`, then try:", file=out)
+        print('  aic chat claude chatgpt --topic "Is free will an illusion?"', file=out)
+        return 0
     if args.local:
         print(f"Wrote {path}. Install Ollama (https://ollama.com), pull the models, then try:", file=out)
         print("  ollama pull llama3.2 && ollama pull qwen2.5:3b && ollama pull gemma3:4b", file=out)
@@ -630,8 +682,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = add("init", "write a starter aic.toml")
     p.add_argument("path", nargs="?", default="aic.toml", metavar="PATH")
     p.add_argument("--force", action="store_true", help="overwrite an existing file")
-    p.add_argument("--local", action="store_true",
-                   help="only local Ollama models: no API key needed")
+    kind = p.add_mutually_exclusive_group()
+    kind.add_argument("--local", action="store_true",
+                      help="only local Ollama models: no API key needed")
+    kind.add_argument("--subscription", action="store_true",
+                      help="Claude + ChatGPT through the claude and codex CLIs: no API key needed")
     p.set_defaults(func=cmd_init)
 
     p = add("replay", "pretty-print a saved JSON transcript")

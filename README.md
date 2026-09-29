@@ -22,6 +22,35 @@ aic --config examples/offline-demo.toml chat captain robot --topic "the lighthou
 
 Each agent gets a coloured header, replies stream live, and `--save story.md` writes a transcript.
 
+## Claude and ChatGPT with your subscriptions, no API key
+
+`aic` can drive the official command-line tools you already log into with your personal accounts. `claude-code` uses the Claude Code CLI with your Claude Pro/Max login. `codex` uses the OpenAI Codex CLI with your ChatGPT login. No API key and no pay-per-token billing.
+
+```sh
+npm install -g @anthropic-ai/claude-code @openai/codex   # needs Node.js 18+
+claude           # log in with your Claude account, then type /exit
+codex login      # log in with your ChatGPT account
+aic init --subscription                                   # writes aic.toml with agents `claude` and `chatgpt`
+aic chat claude chatgpt --topic "Is free will an illusion?" --rounds 3
+aic debate claude chatgpt --motion "Cats are better than dogs"
+```
+
+`aic providers` shows whether `claude` and `codex` are installed. Each reply is a separate run of the CLI, so expect a few seconds per turn. Usage counts against your plan's limits.
+
+## Privacy
+
+This repository is public, and `aic` is built so that nothing personal ends up in it or in the conversation:
+
+- **Isolated CLI runs.** Every `claude-code` and `codex` reply runs in a fresh, empty temporary folder, with the prompt passed on stdin.
+  - Turned off for both: tools (no file, shell or web access), MCP servers, skills and plugins, instruction files (CLAUDE.md / AGENTS.md), memories and session history.
+  - Claude Code: runs with `--setting-sources ""`, so your settings and hooks are not loaded.
+  - Codex: runs with a throwaway `CODEX_HOME` that holds only a copy of your login, so your `~/.codex/AGENTS.md`, skills and config are never sent. A refreshed login is copied back.
+  - The models see only the conversation.
+- **API keys are ignored by the CLI agents.** The `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` variables are removed for these runs, so your subscription is used, never API billing. Set `use_api_key = true` on an agent to change that.
+- **Git-ignored personal files.** Your `aic.toml`, `*.local.toml`, `.env` files and the `transcripts/` folder are git-ignored. Keep personas and transcripts there, not in `examples/`.
+- **Messages cross providers.** Claude's messages are sent to OpenAI and ChatGPT's to Anthropic. Don't put private information in a topic.
+- **Commit email.** Check the email on your own commits. In GitHub, go to Settings, then Emails, and turn on "Keep my email addresses private" and "Block command line pushes that expose my email".
+
 ## 100% local, no API key
 
 Every model runs on your own computer through [Ollama](https://ollama.com). You need no account and no key, and nothing leaves your machine once the models are downloaded.
@@ -69,6 +98,8 @@ Keys come from environment variables only. Run `aic providers` to see which are 
 | `xai` | `XAI_API_KEY` | https://api.x.ai/v1 |
 | `gemini` | `GEMINI_API_KEY` | https://generativelanguage.googleapis.com/v1beta |
 | `ollama` | none | http://localhost:11434 (or `$OLLAMA_HOST`) |
+| `claude-code` | none (Claude login) | the `claude` CLI |
+| `codex` | none (ChatGPT login) | the `codex` CLI |
 | `mock` | none | offline, for tests and demos |
 
 ## Configuration

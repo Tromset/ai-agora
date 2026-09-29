@@ -365,6 +365,15 @@ class InfoCommandTests(CLITestCase):
         self.assertEqual(set(cfg.agents), {"llama", "qwen", "gemma"})
         self.assertTrue(all(a.provider == "ollama" for a in cfg.agents.values()))
 
+    def test_init_subscription_writes_cli_config(self) -> None:
+        target = self.dir / "sub.toml"
+        code, out, err = self.run_cli("init", str(target), "--subscription", config=False)
+        self.assertEqual(code, 0, err)
+        self.assertIn("codex login", out)
+        cfg = load_config(target)
+        self.assertEqual(cfg.agents["claude"].provider, "claude-code")
+        self.assertEqual(cfg.agents["chatgpt"].provider, "codex")
+
 class ExamplesTests(unittest.TestCase):
     def test_example_configs_load(self) -> None:
         root = Path(__file__).resolve().parent.parent / "examples"
@@ -373,6 +382,8 @@ class ExamplesTests(unittest.TestCase):
         demo = load_config(root / "offline-demo.toml")
         self.assertTrue(demo.agents)
         self.assertTrue(all(a.provider == "mock" for a in demo.agents.values()))
+        sub = load_config(root / "subscription.toml")
+        self.assertEqual({a.provider for a in sub.agents.values()}, {"claude-code", "codex"})
         local = load_config(root / "local.toml")
         self.assertTrue(local.agents)
         self.assertTrue(all(a.provider == "ollama" for a in local.agents.values()))

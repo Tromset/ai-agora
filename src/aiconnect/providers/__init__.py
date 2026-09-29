@@ -19,6 +19,8 @@ REGISTRY: dict[str, str] = {
     "xai": "aiconnect.providers.openai:XAIProvider",
     "gemini": "aiconnect.providers.gemini:GeminiProvider",
     "ollama": "aiconnect.providers.ollama:OllamaProvider",
+    "claude-code": "aiconnect.providers.cli:ClaudeCodeProvider",
+    "codex": "aiconnect.providers.cli:CodexProvider",
     "mock": "aiconnect.providers.mock:MockProvider",
 }
 

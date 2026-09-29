@@ -5,3 +5,11 @@ build/
 dist/
 .venv/
 transcripts/
+
+# Personal files: never commit these to the public repo
+aic.toml
+*.local.toml
+.env
+.env.*
+*.transcript.md
+*.transcript.json
