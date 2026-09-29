@@ -356,6 +356,15 @@ class InfoCommandTests(CLITestCase):
         self.assertIn("[agents.claude]", target.read_text(encoding="utf-8"))
 
 
+    def test_init_local_writes_ollama_only_config(self) -> None:
+        target = self.dir / "local.toml"
+        code, out, err = self.run_cli("init", str(target), "--local", config=False)
+        self.assertEqual(code, 0, err)
+        self.assertIn("ollama pull", out)
+        cfg = load_config(target)
+        self.assertEqual(set(cfg.agents), {"llama", "qwen", "gemma"})
+        self.assertTrue(all(a.provider == "ollama" for a in cfg.agents.values()))
+
 class ExamplesTests(unittest.TestCase):
     def test_example_configs_load(self) -> None:
         root = Path(__file__).resolve().parent.parent / "examples"
@@ -364,6 +373,9 @@ class ExamplesTests(unittest.TestCase):
         demo = load_config(root / "offline-demo.toml")
         self.assertTrue(demo.agents)
         self.assertTrue(all(a.provider == "mock" for a in demo.agents.values()))
+        local = load_config(root / "local.toml")
+        self.assertTrue(local.agents)
+        self.assertTrue(all(a.provider == "ollama" for a in local.agents.values()))
 
     def test_offline_demo_runs(self) -> None:
         root = Path(__file__).resolve().parent.parent / "examples"
