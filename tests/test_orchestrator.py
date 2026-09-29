@@ -79,6 +79,12 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(agent.respond([Message("user", "hi")]), "padded")
         self.assertEqual(seen, {"model": "m", "system": "SYS", "temperature": 0.3, "max_tokens": 77})
 
+    def test_respond_drops_parroted_speaker_tags(self) -> None:
+        agent = make("a", ["[llama]: [Moderator]:  I agree.", "[not a tag] stays", "x [b]: y"])
+        self.assertEqual(agent.respond([Message("user", "hi")]), "I agree.")
+        self.assertEqual(agent.respond([Message("user", "hi")]), "[not a tag] stays")
+        self.assertEqual(agent.respond([Message("user", "hi")]), "x [b]: y")
+
     def test_respond_streams_chunks(self) -> None:
         agent = make("a", ["hello big world"])
         chunks: list[tuple[str, str]] = []

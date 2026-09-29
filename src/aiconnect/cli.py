@@ -66,6 +66,55 @@ base_url = "http://localhost:11434"   # any extra key is passed to the provider 
 #   system_file = "persona.md"
 '''
 
+LOCAL_STARTER_CONFIG = '''\
+# aic configuration for 100% local models: no API key, no internet once the models are downloaded.
+# Save as ./aic.toml or ~/.config/aic/config.toml (or pass --config PATH).
+#
+# Setup (once):
+#   1. Install Ollama from https://ollama.com (Windows, macOS, Linux) and leave it running.
+#   2. Download the models used below:
+#        ollama pull llama3.2
+#        ollama pull qwen2.5:3b
+#        ollama pull gemma3:4b
+#
+# Try it:
+#   aic chat llama qwen --topic "Is free will an illusion?" --rounds 3
+#   aic debate llama qwen --motion "Cats are better than dogs" --judge gemma
+#   aic panel llama qwen gemma --question "Best first programming language?" --synthesizer gemma
+#
+# Model size vs. your PC (RAM needed is roughly the download size + 1-2 GB):
+#   tiny, any PC:      qwen2.5:0.5b (0.4 GB), llama3.2:1b (1.3 GB)
+#   small, 8 GB RAM:   llama3.2 (2 GB), qwen2.5:3b (1.9 GB), gemma3:4b (3.3 GB)
+#   medium, 16 GB RAM: qwen2.5:7b (4.7 GB), llama3.1:8b (4.9 GB), mistral (4.1 GB)
+
+[defaults]
+rounds = 3
+stream = true
+# save_dir = "transcripts"    # auto-save a Markdown transcript of every run here
+
+[agents.llama]
+provider = "ollama"
+model = "llama3.2"
+system = "You are Llama, a curious philosopher. Answer in a few sentences and ask a sharp follow-up question."
+temperature = 0.8
+max_tokens = 400
+
+[agents.qwen]
+provider = "ollama"
+model = "qwen2.5:3b"
+system = "You are Qwen, a pragmatic engineer. Be concrete, challenge vague claims, keep replies short."
+max_tokens = 400
+
+[agents.gemma]
+provider = "ollama"
+model = "gemma3:4b"
+system = "You are Gemma, a fair and witty referee who loves analogies."
+max_tokens = 400
+
+# Ollama on another machine of your network:
+#   base_url = "http://192.168.1.20:11434"
+'''
+
 # -- Rendering --------------------------------------------------------------------------------
 
 _PALETTE = ("36", "33", "35", "32", "34", "91", "96", "93", "95", "92")
@@ -474,9 +523,14 @@ def cmd_init(args: argparse.Namespace, config: Config, out: TextIO, err: TextIO)
         raise ConfigError(f"{path} already exists. Use --force to overwrite it.")
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(STARTER_CONFIG, encoding="utf-8")
+        path.write_text(LOCAL_STARTER_CONFIG if args.local else STARTER_CONFIG, encoding="utf-8")
     except OSError as exc:
         raise ConfigError(f"Cannot write {path}: {exc}") from None
+    if args.local:
+        print(f"Wrote {path}. Install Ollama (https://ollama.com), pull the models, then try:", file=out)
+        print("  ollama pull llama3.2 && ollama pull qwen2.5:3b && ollama pull gemma3:4b", file=out)
+        print('  aic chat llama qwen --topic "Is free will an illusion?"', file=out)
+        return 0
     print(f"Wrote {path}. Set your API keys (see 'aic providers'), then try:", file=out)
     print('  aic chat claude gpt --topic "Is free will an illusion?"', file=out)
     return 0
@@ -576,6 +630,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = add("init", "write a starter aic.toml")
     p.add_argument("path", nargs="?", default="aic.toml", metavar="PATH")
     p.add_argument("--force", action="store_true", help="overwrite an existing file")
+    p.add_argument("--local", action="store_true",
+                   help="only local Ollama models: no API key needed")
     p.set_defaults(func=cmd_init)
 
     p = add("replay", "pretty-print a saved JSON transcript")

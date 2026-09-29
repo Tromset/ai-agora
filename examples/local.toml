@@ -1,0 +1,46 @@
+# aic configuration for 100% local models: no API key, no internet once the models are downloaded.
+# Save as ./aic.toml or ~/.config/aic/config.toml (or pass --config PATH).
+#
+# Setup (once):
+#   1. Install Ollama from https://ollama.com (Windows, macOS, Linux) and leave it running.
+#   2. Download the models used below:
+#        ollama pull llama3.2
+#        ollama pull qwen2.5:3b
+#        ollama pull gemma3:4b
+#
+# Try it:
+#   aic chat llama qwen --topic "Is free will an illusion?" --rounds 3
+#   aic debate llama qwen --motion "Cats are better than dogs" --judge gemma
+#   aic panel llama qwen gemma --question "Best first programming language?" --synthesizer gemma
+#
+# Model size vs. your PC (RAM needed is roughly the download size + 1-2 GB):
+#   tiny, any PC:      qwen2.5:0.5b (0.4 GB), llama3.2:1b (1.3 GB)
+#   small, 8 GB RAM:   llama3.2 (2 GB), qwen2.5:3b (1.9 GB), gemma3:4b (3.3 GB)
+#   medium, 16 GB RAM: qwen2.5:7b (4.7 GB), llama3.1:8b (4.9 GB), mistral (4.1 GB)
+
+[defaults]
+rounds = 3
+stream = true
+# save_dir = "transcripts"    # auto-save a Markdown transcript of every run here
+
+[agents.llama]
+provider = "ollama"
+model = "llama3.2"
+system = "You are Llama, a curious philosopher. Answer in a few sentences and ask a sharp follow-up question."
+temperature = 0.8
+max_tokens = 400
+
+[agents.qwen]
+provider = "ollama"
+model = "qwen2.5:3b"
+system = "You are Qwen, a pragmatic engineer. Be concrete, challenge vague claims, keep replies short."
+max_tokens = 400
+
+[agents.gemma]
+provider = "ollama"
+model = "gemma3:4b"
+system = "You are Gemma, a fair and witty referee who loves analogies."
+max_tokens = 400
+
+# Ollama on another machine of your network:
+#   base_url = "http://192.168.1.20:11434"

@@ -22,6 +22,38 @@ aic --config examples/offline-demo.toml chat captain robot --topic "the lighthou
 
 Each agent gets a coloured header, replies stream live, and `--save story.md` writes a transcript.
 
+## 100% local, no API key
+
+Every model runs on your own computer through [Ollama](https://ollama.com). You need no account and no key, and nothing leaves your machine once the models are downloaded.
+
+1. Install Python 3.11+ ([python.org](https://www.python.org/downloads/); on Windows tick "Add Python to PATH") and Ollama ([ollama.com/download](https://ollama.com/download)), which then keeps running in the background.
+2. Install `aic` and write a local config:
+   ```sh
+   pip install -e .
+   aic init --local            # writes aic.toml with three Ollama agents: llama, qwen, gemma
+   ```
+3. Download the models once:
+   ```sh
+   ollama pull llama3.2
+   ollama pull qwen2.5:3b
+   ollama pull gemma3:4b
+   ```
+4. Let them talk:
+   ```sh
+   aic chat llama qwen --topic "Is free will an illusion?" --rounds 3
+   aic debate llama qwen --motion "Cats are better than dogs" --judge gemma
+   ```
+
+Pick models that fit your RAM. Plan on roughly the download size plus 1-2 GB:
+
+| Your PC | Models |
+|---|---|
+| any | `qwen2.5:0.5b` (0.4 GB), `llama3.2:1b` (1.3 GB) |
+| 8 GB RAM | `llama3.2` (2 GB), `qwen2.5:3b` (1.9 GB), `gemma3:4b` (3.3 GB) |
+| 16 GB RAM | `qwen2.5:7b` (4.7 GB), `llama3.1:8b` (4.9 GB), `mistral` (4.1 GB) |
+
+You can also skip the config file and name models inline: `aic chat ollama:llama3.2 ollama:qwen2.5:3b --topic "..."`. Tiny models (under 3B parameters) run fast but ramble. Use 3B+ models for conversations worth reading. `examples/local.toml` is the same config as `aic init --local`.
+
 ## API keys
 
 Keys come from environment variables only. Run `aic providers` to see which are set (the key itself is never printed).

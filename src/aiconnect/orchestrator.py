@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
@@ -19,6 +20,8 @@ OnToken = Callable[[str, str], None]  # (speaker, chunk) while streaming
 
 # The seed turn is shown to models as coming from this speaker.
 SEED_SPEAKER_LABEL = "Moderator"
+# Small (often local) models tend to parrot the "[Speaker]: " tags they see in the history.
+_SPEAKER_TAG = re.compile(r"^(?:\[[^\]\n]{1,40}\]:\s*)+")
 
 CHAT_INSTRUCTION = (
     "You are {name} in a group conversation with {others}. Reply to the latest messages in "
@@ -79,12 +82,17 @@ class Agent:
         spec = self.spec
         kwargs = dict(system=spec.system, temperature=spec.temperature, max_tokens=spec.max_tokens)
         if on_token is None:
-            return self.provider.complete(spec.model, messages, **kwargs).strip()
+            return _clean_reply(self.provider.complete(spec.model, messages, **kwargs))
         chunks: list[str] = []
         for chunk in self.provider.stream(spec.model, messages, **kwargs):
             chunks.append(chunk)
             on_token(spec.name, chunk)
-        return "".join(chunks).strip()
+        return _clean_reply("".join(chunks))
+
+
+def _clean_reply(text: str) -> str:
+    """Trim whitespace and any leading "[Speaker]: " tags the model copied from its view."""
+    return _SPEAKER_TAG.sub("", text.strip()).strip()
 
 
 # -- Perspective ------------------------------------------------------------------------------
