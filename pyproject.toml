@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-connected-to-ai"
+version = "0.1.0"
+description = "Custom CLI to let your different AIs and models talk to each other."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+aic = "aiconnect.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

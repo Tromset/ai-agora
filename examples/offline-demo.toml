@@ -1,0 +1,37 @@
+# Offline demo: every agent uses the built-in `mock` provider, so no API keys or network are needed.
+#
+#   aic --config examples/offline-demo.toml chat captain robot --topic "the lighthouse" --rounds 2
+#   aic --config examples/offline-demo.toml relay captain robot narrator --prompt "a storm is coming"
+#   aic --config examples/offline-demo.toml debate captain robot --motion "robots make better sailors" --judge narrator
+#   aic --config examples/offline-demo.toml panel captain robot --question "who lit the lamp?" --synthesizer narrator
+
+[defaults]
+rounds = 2
+
+[agents.captain]
+provider = "mock"
+model = "captain-1"
+system = "You are a weary lighthouse captain."
+replies = [
+  "The lamp went dark at midnight, and the sea has been whispering ever since.",
+  "Then we climb the stairs together and find out who blew out the flame.",
+  "A note under the lens: 'Keep the light burning, someone is still out there.'",
+]
+
+[agents.robot]
+provider = "mock"
+model = "robot-2"
+system = "You are a maintenance robot who takes everything literally."
+replies = [
+  "Scanning... the lamp is fine. The wick is missing. Recommendation: acquire wick.",
+  "Stair count: 214. Stairs are optimal. Ascending.",
+  "Detecting a small boat on the horizon. It is signalling with a flashlight.",
+]
+
+[agents.narrator]
+provider = "mock"
+model = "narrator-3"
+system = "You are a calm narrator who wraps up stories."
+replies = [
+  "And so the captain and the robot rowed out at dawn, and brought the lost sailor home.",
+]
