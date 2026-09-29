@@ -1,0 +1,44 @@
+# Starter configuration for aic. Copy to ./aic.toml (or ~/.config/aic/config.toml) and edit.
+# API keys are read from environment variables only (see `aic providers`).
+#
+# Try it:
+#   aic chat claude gpt --topic "Is free will an illusion?" --rounds 3
+#   aic debate claude gpt --motion "Tabs beat spaces" --judge gemini
+#   aic panel claude gpt gemini local --question "Best first programming language?" --synthesizer claude
+
+[defaults]
+rounds = 3                # default for --rounds
+stream = true             # set to false to print whole turns instead of live tokens
+# save_dir = "transcripts"  # auto-save a Markdown transcript of every run here
+
+[agents.claude]
+provider = "anthropic"    # key: ANTHROPIC_API_KEY
+model = "claude-sonnet-5-5"
+system = "You are Claude, a curious philosopher. Answer in a few sentences and ask a sharp follow-up question."
+temperature = 0.8
+max_tokens = 600
+
+[agents.gpt]
+provider = "openai"       # key: OPENAI_API_KEY
+model = "gpt-5"
+system = "You are GPT, a pragmatic engineer. Be concrete, challenge vague claims, keep replies short."
+max_tokens = 600
+
+[agents.gemini]
+provider = "gemini"       # key: GEMINI_API_KEY
+model = "gemini-2.5-flash"
+system = "You are Gemini, a witty science communicator who loves analogies."
+temperature = 0.9
+max_tokens = 600
+
+[agents.local]
+provider = "ollama"       # no key; needs `ollama serve` running
+model = "llama3.2"
+system = "You are a laid-back local model. Be brief and honest about what you don't know."
+base_url = "http://localhost:11434"   # any extra key is passed to the provider as an option
+
+# Put a long persona in a separate file, path relative to this config:
+# [agents.critic]
+# provider = "anthropic"
+# model = "claude-sonnet-5-5"
+# system_file = "persona.md"
