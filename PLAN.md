@@ -184,11 +184,11 @@ Exit codes: 0 ok, 1 AICError (message on stderr, no traceback), 130 on Ctrl-C.
 
 ## Task list
 - [x] Core skeleton: pyproject, errors, types, http, provider base, registry, mock
-- [ ] A: anthropic.py + openai.py (+ presets) + tests/test_providers_anthropic_openai.py
-- [ ] B: gemini.py + ollama.py + tests/test_providers_gemini_ollama.py (+ tests for mock/registry)
-- [ ] C: transcript.py + orchestrator.py + tests/test_transcript.py + tests/test_orchestrator.py
-- [ ] D: config.py + cli.py + examples/ + README.md + CI + tests/test_config.py + tests/test_cli.py
-- [ ] Integration: full test suite green, `aic chat` end-to-end with mock agents, commit, PR
+- [x] A: anthropic.py + openai.py (+ presets) + tests/test_providers_anthropic_openai.py
+- [x] B: gemini.py + ollama.py + tests/test_providers_gemini_ollama.py (+ tests for mock/registry)
+- [x] C: transcript.py + orchestrator.py + tests/test_transcript.py + tests/test_orchestrator.py
+- [x] D: config.py + cli.py + examples/ + README.md + CI + tests/test_config.py + tests/test_cli.py
+- [x] Integration: full test suite green, `aic chat` end-to-end with mock agents, commit, PR
 
 ## Risks
 - Role alternation: Anthropic/Gemini reject consecutive same-role messages → `build_view` merges.
