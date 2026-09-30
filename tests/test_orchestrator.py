@@ -85,6 +85,18 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(agent.respond([Message("user", "hi")]), "[not a tag] stays")
         self.assertEqual(agent.respond([Message("user", "hi")]), "x [b]: y")
 
+    def test_streamed_tokens_hide_parroted_speaker_tags(self) -> None:
+        for reply, shown in [
+            ("[llama]: [Moderator]:  I agree with you", "I agree with you"),
+            ("[not a tag] stays here", "[not a tag] stays here"),
+            ("plain words", "plain words"),
+            ("[x]:", ""),
+        ]:
+            chunks: list[str] = []
+            text = make("a", [reply]).respond([Message("user", "hi")], on_token=lambda s, c: chunks.append(c))
+            self.assertEqual("".join(chunks).strip(), shown, reply)
+            self.assertEqual(text, shown, reply)
+
     def test_respond_streams_chunks(self) -> None:
         agent = make("a", ["hello big world"])
         chunks: list[tuple[str, str]] = []

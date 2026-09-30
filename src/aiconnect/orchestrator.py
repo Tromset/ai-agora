@@ -84,9 +84,23 @@ class Agent:
         if on_token is None:
             return _clean_reply(self.provider.complete(spec.model, messages, **kwargs))
         chunks: list[str] = []
+        pending: str | None = ""  # held back while it could still be a parroted speaker tag
         for chunk in self.provider.stream(spec.model, messages, **kwargs):
             chunks.append(chunk)
-            on_token(spec.name, chunk)
+            if pending is None:
+                on_token(spec.name, chunk)
+                continue
+            pending += chunk
+            head = pending.lstrip()
+            tag = _SPEAKER_TAG.match(head)
+            if tag and tag.end() < len(head):
+                on_token(spec.name, head[tag.end():])
+                pending = None
+            elif head and not tag and (not head.startswith("[") or "]" in head or len(head) > 45):
+                on_token(spec.name, pending)
+                pending = None
+        if pending:
+            on_token(spec.name, _clean_reply(pending))
         return _clean_reply("".join(chunks))
 
 

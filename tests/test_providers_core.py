@@ -185,7 +185,7 @@ class RegistryTests(unittest.TestCase):
     def test_expected_names_registered(self) -> None:
         expected = {
             "anthropic", "openai", "openrouter", "groq", "mistral",
-            "deepseek", "xai", "gemini", "ollama", "mock",
+            "deepseek", "xai", "gemini", "ollama", "claude-code", "codex", "mock",
         }
         self.assertEqual(set(REGISTRY), expected)
 
